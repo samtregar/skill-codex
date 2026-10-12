@@ -8,6 +8,8 @@ Note: If you want a more autonomous setup for agentic workflows, check out [klau
 ## Purpose
 Enable Claude Code to invoke the Codex CLI (`codex exec` and session resumes) for automated code analysis, refactoring, and editing workflows.
 
+This is a fork of [skills-directory/skill-codex](https://github.com/skills-directory/skill-codex). It shows you Codex's output verbatim instead of only Claude's summary, and adds a script for viewing earlier Codex sessions. The install steps below install this fork.
+
 ## Prerequisites
 - `codex` CLI installed and available on `PATH`.
 - Codex configured with valid credentials and settings.
@@ -23,16 +25,18 @@ This repository is structured as a [Claude Code Plugin](https://code.claude.com/
 Install via Claude Code's plugin system for automatic updates:
 
 ```
-/plugin marketplace add skills-directory/skill-codex
+/plugin marketplace add samtregar/skill-codex
 /plugin install skill-codex@skill-codex
 ```
+
+If you already added the upstream `skills-directory/skill-codex` marketplace, remove it first with `/plugin marketplace remove skill-codex`. Both marketplaces use the name `skill-codex`.
 
 ### Option 2: Standalone Skill Installation
 
 Extract the skill folder manually:
 
 ```
-git clone --depth 1 git@github.com:skills-directory/skill-codex.git /tmp/skills-temp && \
+git clone --depth 1 https://github.com/samtregar/skill-codex.git /tmp/skills-temp && \
 mkdir -p ~/.claude/skills && \
 cp -r /tmp/skills-temp/plugins/skill-codex/skills/codex ~/.claude/skills/codex && \
 rm -rf /tmp/skills-temp

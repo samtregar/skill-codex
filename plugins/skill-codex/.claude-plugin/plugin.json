@@ -6,8 +6,8 @@
     "name": "skills-directory",
     "url": "https://github.com/skills-directory"
   },
-  "homepage": "https://github.com/skills-directory/skill-codex",
-  "repository": "https://github.com/skills-directory/skill-codex",
+  "homepage": "https://github.com/samtregar/skill-codex",
+  "repository": "https://github.com/samtregar/skill-codex",
   "license": "MIT",
   "keywords": [
     "claude-code",
