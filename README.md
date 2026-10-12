@@ -12,6 +12,7 @@ Enable Claude Code to invoke the Codex CLI (`codex exec` and session resumes) fo
 - `codex` CLI installed and available on `PATH`.
 - Codex configured with valid credentials and settings.
 - Confirm the installation by running `codex --version`; resolve any errors before using the skill.
+- Python 3, for viewing earlier Codex output (`scripts/codex_review.py`).
 
 ## Installation
 
@@ -68,7 +69,7 @@ codex exec -m gpt-6-astra \
 Claude will show Codex's response verbatim, then give its own assessment separately and ask if you'd like to continue with follow-up actions.
 
 ### Viewing Earlier Codex Output
-Codex saves every session under `~/.codex/sessions/`. Ask Claude to "show me Codex's last review" (or a list of recent Codex sessions) and it will run the bundled `scripts/codex_review.py` to print the response verbatim. You can also run it yourself:
+Codex saves every session under `~/.codex/sessions/` (or `$CODEX_HOME/sessions` if `CODEX_HOME` is set). Ask Claude to "show me Codex's last review" (or a list of recent Codex sessions) and it will run the bundled `scripts/codex_review.py` to print the response verbatim. You can also run it yourself:
 
 ```bash
 python3 plugins/skill-codex/skills/codex/scripts/codex_review.py --list         # recent sessions
