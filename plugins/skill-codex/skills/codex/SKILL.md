@@ -28,8 +28,9 @@ description: Use when the user asks to run Codex CLI (codex exec, codex resume) 
 5. When continuing a previous session, use `codex exec --skip-git-repo-check resume --last` via stdin. When resuming don't use any configuration flags unless explicitly requested by the user e.g. if he species the model or the reasoning effort when requesting to resume a session. Resume syntax: `echo "your prompt here" | codex exec --skip-git-repo-check resume --last 2>/dev/null`. All flags have to be inserted between exec and resume.
 6. **IMPORTANT**: By default, append `2>/dev/null` to all `codex exec` commands to suppress thinking tokens (stderr). Only show stderr if the user explicitly requests to see thinking tokens or if debugging is needed.
 7. **IMPORTANT (stdin)**: `codex exec` always reads stdin and concatenates it with the positional prompt -- even when the prompt is fully supplied as a positional argument. If stdin is not closed, codex blocks forever. When invoking from a harness (background tasks, hooks, scripts where stdin is not a TTY but also not closed), explicitly redirect stdin: append `</dev/null` to the command, e.g. `codex exec ... "prompt" </dev/null 2>/dev/null`. Symptom of getting this wrong: zero bytes of stdout, zero CPU accumulated, process appears hung indefinitely.
-8. Run the command, capture stdout/stderr (filtered as appropriate), and summarize the outcome for the user.
-9. **After Codex completes**, inform the user: "You can resume this Codex session at any time by saying 'codex resume' or asking me to continue with additional analysis or changes."
+8. Run the command and capture stdout (filtered as appropriate). With `2>/dev/null`, stdout is exactly Codex's final message.
+9. **Show Codex's output to the user verbatim** after every `codex exec` run, including resumes. Tool output is collapsed in the user's view, so this is how they see what Codex actually said. Under a `### Codex's response` heading, reproduce stdout exactly as written: no summarizing, trimming, reordering, or rewording. Then, under a separate `### Claude's take` heading, give your own assessment (see *Critical Evaluation of Codex Output*). Skip the verbatim copy only if the user asked for just a summary.
+10. **After Codex completes**, inform the user: "You can resume this Codex session at any time by saying 'codex resume' or asking me to continue with additional analysis or changes."
 
 ### Quick Reference
 | Use case | Sandbox mode | Key flags |
@@ -61,6 +62,18 @@ Codex produces **no intermediate output** — it writes the result only at compl
 - After every `codex` command, immediately use `AskUserQuestion` to confirm next steps, collect clarifications, or decide whether to resume with `codex exec resume --last`.
 - When resuming, pipe the new prompt via stdin: `echo "new prompt" | codex exec resume --last 2>/dev/null`. The resumed session automatically uses the same model, reasoning effort, and sandbox mode from the original session.
 - Restate the chosen model, reasoning effort, and sandbox mode when proposing follow-up actions.
+
+## Viewing Past Codex Output
+Codex saves every session, including ones run in the Codex TUI, under `~/.codex/sessions/`. When the user asks to see an earlier Codex response, or a background run's output was lost, run `scripts/codex_review.py` from this skill's base directory and show its output verbatim, as in step 9:
+
+```bash
+python3 <skill-dir>/scripts/codex_review.py --cwd "$PWD"        # last answer from the latest session run in this directory
+python3 <skill-dir>/scripts/codex_review.py --cwd "$PWD" --all  # every turn of that session (the original review plus each resume)
+python3 <skill-dir>/scripts/codex_review.py --list              # recent sessions: index, time, directory, first prompt
+python3 <skill-dir>/scripts/codex_review.py -n 3                # session #3 from --list (pass the same --cwd to both, if any)
+```
+
+If the session never finished, the script warns on stderr and shows Codex's last message instead.
 
 ## Critical Evaluation of Codex Output
 
