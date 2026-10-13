@@ -14,7 +14,7 @@ This is a fork of [skills-directory/skill-codex](https://github.com/skills-direc
 - `codex` CLI installed and available on `PATH`.
 - Codex configured with valid credentials and settings.
 - Confirm the installation by running `codex --version`; resolve any errors before using the skill.
-- Python 3, for viewing earlier Codex output (`scripts/codex_review.py`).
+- Python 3, for listing the models your Codex setup offers (`scripts/codex_models.py`) and viewing earlier Codex output (`scripts/codex_review.py`).
 
 ## Installation
 
@@ -56,8 +56,8 @@ Use codex to analyze this repository and suggest improvements for my claude code
 
 **Claude Code response:**
 Claude will activate the Codex skill and:
-1. Ask which model to use (`gpt-6-astra` by default; `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`; or a legacy model such as `gpt-5.5`) unless already specified in your prompt.
-2. Ask which reasoning effort level (`low`, `medium`, `high`, `xhigh`, `max`, or `ultra`, subject to the model's ceiling) unless already specified in your prompt.
+1. Ask which model to use (`gpt-6-astra` by default) unless already specified in your prompt, choosing from the models Codex offers with your configuration (see *Model Providers* below).
+2. Ask which reasoning effort level (`low`, `medium`, `high`, `xhigh`, `max`, or `ultra`, as supported by the chosen model) unless already specified in your prompt.
 3. Select appropriate sandbox mode (defaults to `read-only` for analysis)
 4. Run a command like:
 ```bash
@@ -71,6 +71,14 @@ codex exec -m gpt-6-astra \
 
 **Result:**
 Claude will show Codex's response verbatim, then give its own assessment separately and ask if you'd like to continue with follow-up actions.
+
+### Model Providers (OpenAI, Amazon Bedrock)
+Model IDs and supported reasoning efforts depend on the model provider Codex is configured to use. With OpenAI the default model is `gpt-6-astra`; with Amazon Bedrock it is `openai.gpt-6-astra` (or `global.openai.gpt-6-astra` / `us.openai.gpt-6-astra` with the `amazon-bedrock-runtime` provider), and `ultra` effort isn't available. Before asking which model to use, the skill runs `scripts/codex_models.py`, which reads Codex's model catalog for your configuration (`codex debug models`), so it always passes Codex an ID that your provider accepts. You can run it yourself:
+
+```bash
+python3 plugins/skill-codex/skills/codex/scripts/codex_models.py                                   # models for your current config
+python3 plugins/skill-codex/skills/codex/scripts/codex_models.py -c model_provider=amazon-bedrock  # models for another provider
+```
 
 ### Viewing Earlier Codex Output
 Codex saves every session under `~/.codex/sessions/` (or `$CODEX_HOME/sessions` if `CODEX_HOME` is set). Ask Claude to "show me Codex's last review" (or a list of recent Codex sessions) and it will run the bundled `scripts/codex_review.py` to print the response verbatim. You can also run it yourself:

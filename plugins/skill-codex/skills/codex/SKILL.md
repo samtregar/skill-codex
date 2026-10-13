@@ -6,26 +6,32 @@ description: Use when the user asks to run Codex CLI (codex exec, codex resume) 
 # Codex Skill Guide
 
 ## Running a Task
-1. For a new session (resumes inherit the prior model/effort — see step 5), ask the user (via `AskUserQuestion`) which **model** AND which **reasoning effort** to use, in a **single prompt with two questions**. When the user expresses no preference, default to `gpt-6-astra` at `high`.
-   - **Model** — default `gpt-6-astra`:
-     - *GPT-6:* `gpt-6-astra` (frontier / most capable — **default**)
-     - *GPT-5.6:* `gpt-5.6-sol` (reliable agentic workhorse), `gpt-5.6-terra` (balanced, everyday), `gpt-5.6-luna` (fast & affordable)
-     - *Legacy (kept for compatibility):* `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.3-codex-spark`, `gpt-5.3-codex`
-   - **Reasoning effort** — default `high`: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`.
-     - `max`/`ultra` require a GPT-6 or GPT-5.6 model; `ultra` is only on `astra`/`sol`/`terra` (`luna` caps at `max`); legacy models cap at `xhigh`.
+1. For a new session (resumes inherit the prior model/effort — see step 5), first list the models Codex offers with the user's setup:
+   ```bash
+   python3 <skill-dir>/scripts/codex_models.py
+   ```
+   Model IDs depend on the configured provider. With OpenAI they are bare (`gpt-6-astra`); on Amazon Bedrock they carry a prefix (`openai.gpt-6-astra`, or `global.openai.gpt-6-astra` / `us.openai.gpt-6-astra` for cross-region). **Always pass `-m` an ID exactly as the script prints it**, never a bare name from this file. (`<skill-dir>` is explained in *Viewing Past Codex Output*.)
+
+   Then ask the user (via `AskUserQuestion`) which **model** AND which **reasoning effort** to use, in a **single prompt with two questions**, offering only what the script listed. When the user expresses no preference, use the model the script marks `[default]` (the provider's `gpt-6-astra`) at `high`.
+   - **Model** — label options by tier: `astra` is frontier / most capable (**default**), `sol` a reliable agentic workhorse, `terra` balanced for everyday work, `luna` fast & affordable.
+     - If the user names a model by its bare name (e.g. `gpt-6-sol`), use the listed ID that ends in it (`openai.gpt-6-sol` on Bedrock). If more than one matches (the `global.` and `us.` cross-region variants), ask which.
+     - If the user names a model that isn't listed, rerun the script with `--all`, which includes models Codex hides from its picker. If it is still missing, tell the user Codex doesn't list it for their provider and ask before trying it anyway.
+   - **Reasoning effort** — default `high`. Offer only the efforts the script lists for the chosen model; they vary by model and provider (e.g. Bedrock has no `ultra`).
      - `ultra` = maximum reasoning **with automatic task delegation** (slowest and most expensive — reserve for the hardest jobs).
-     - If the chosen effort exceeds the chosen model's maximum, fall back to that model's highest supported effort and tell the user.
+     - If the chosen effort isn't listed for the chosen model, fall back to that model's highest listed effort and tell the user.
+   - If the user runs Codex with a profile (`-p`), pass the profile's `model_provider` to the script as `-c model_provider=<id>`, since `codex debug models` ignores profiles.
+   - If the script fails (e.g. a Codex too old to have `codex debug models`), tell the user, then fall back to the OpenAI defaults: models `gpt-6-astra` (default), `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`; efforts `low`, `medium`, `high`, `xhigh`, `max`, `ultra`, where `luna` caps at `max`.
 2. Select the sandbox mode required for the task; default to `--sandbox read-only` unless edits or network access are necessary.
 3. Assemble the command with the appropriate options:
-   - `-m, --model <MODEL>`
-   - `--config model_reasoning_effort="<low|medium|high|xhigh|max|ultra>"` (max/ultra only on GPT-6 / GPT-5.6 models; ultra only on astra/sol/terra — see step 1)
+   - `-m, --model <MODEL>` (the model ID exactly as `codex_models.py` printed it — see step 1)
+   - `--config model_reasoning_effort="<low|medium|high|xhigh|max|ultra>"` (only an effort `codex_models.py` listed for that model)
    - `--sandbox <read-only|workspace-write|danger-full-access>`
    - `--full-auto`
    - `-C, --cd <DIR>`
    - `--skip-git-repo-check`
    - `"your prompt here"` (as final positional argument)
 4. Always use --skip-git-repo-check.
-5. When continuing a previous session, use `codex exec --skip-git-repo-check resume --last` via stdin. When resuming don't use any configuration flags unless explicitly requested by the user e.g. if he species the model or the reasoning effort when requesting to resume a session. Resume syntax: `echo "your prompt here" | codex exec --skip-git-repo-check resume --last 2>/dev/null`. All flags have to be inserted between exec and resume.
+5. When continuing a previous session, use `codex exec --skip-git-repo-check resume --last` via stdin. When resuming don't use any configuration flags unless explicitly requested by the user e.g. if he species the model or the reasoning effort when requesting to resume a session (resolve a requested model to its listed ID as in step 1). Resume syntax: `echo "your prompt here" | codex exec --skip-git-repo-check resume --last 2>/dev/null`. All flags have to be inserted between exec and resume.
 6. **IMPORTANT**: By default, append `2>/dev/null` to all `codex exec` commands to suppress thinking tokens (stderr). Only show stderr if the user explicitly requests to see thinking tokens or if debugging is needed.
 7. **IMPORTANT (stdin)**: `codex exec` always reads stdin and concatenates it with the positional prompt -- even when the prompt is fully supplied as a positional argument. If stdin is not closed, codex blocks forever. When invoking from a harness (background tasks, hooks, scripts where stdin is not a TTY but also not closed), explicitly redirect stdin: append `</dev/null` to the command, e.g. `codex exec ... "prompt" </dev/null 2>/dev/null`. Symptom of getting this wrong: zero bytes of stdout, zero CPU accumulated, process appears hung indefinitely.
 8. Run the command and wait for it to finish (for a background run, wait for its completion notice; launching is not finishing). With `2>/dev/null`, stdout is exactly Codex's final message.
