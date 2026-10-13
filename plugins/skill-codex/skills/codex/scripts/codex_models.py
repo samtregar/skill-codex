@@ -14,7 +14,8 @@ Bedrock), so each model's efforts are listed with it.
   codex_models.py -c KEY=VALUE    pass a config override to Codex (repeatable),
                                   e.g. -c model_provider=amazon-bedrock
 
-The model marked [default] is the provider's gpt-6-astra, if it offers one.
+Models marked [default] are the provider's gpt-6-astra, if it offers one.
+With amazon-bedrock-runtime there are several (global. and us. variants).
 """
 import argparse
 import json
@@ -40,6 +41,8 @@ def catalog(overrides):
     try:
         models = json.loads(proc.stdout)["models"]
     except (ValueError, KeyError, TypeError):
+        models = None
+    if not isinstance(models, list):
         sys.exit("Could not parse the output of `codex debug models`.")
     return [m for m in models if isinstance(m, dict) and isinstance(m.get("slug"), str)]
 
@@ -67,18 +70,21 @@ def main():
     if not models:
         sys.exit("Codex reported no models for this config.")
 
-    default = next((m["slug"] for m in models if is_default(m["slug"])), None)
+    defaults = [m["slug"] for m in models if is_default(m["slug"])]
     width = max(len(m["slug"]) for m in models)
     name_width = max(len(str(m.get("display_name") or "")) for m in models)
     print("Pass the model ID to `codex exec -m` exactly as shown.\n")
     for m in models:
         name = str(m.get("display_name") or "")
-        flags = "  [default]" if m["slug"] == default else ""
+        flags = "  [default]" if m["slug"] in defaults else ""
         if m.get("visibility") != "list":
             flags += "  [hidden]"
         print(f"  {m['slug']:<{width}}  {name:<{name_width}}  efforts: {' '.join(efforts(m))}{flags}")
-    if default is None:
+    if not defaults:
         print(f"\nNo {DEFAULT_MODEL} model is offered with this config; there is no [default].")
+    elif len(defaults) > 1:
+        # e.g. the global. and us. cross-region variants on Bedrock.
+        print(f"\nSeveral {DEFAULT_MODEL} variants are offered; ask the user which [default] to use.")
     return 0
 
 

@@ -73,7 +73,7 @@ codex exec -m gpt-6-astra \
 Claude will show Codex's response verbatim, then give its own assessment separately and ask if you'd like to continue with follow-up actions.
 
 ### Model Providers (OpenAI, Amazon Bedrock)
-Model IDs and supported reasoning efforts depend on the model provider Codex is configured to use. With OpenAI the default model is `gpt-6-astra`; with Amazon Bedrock it is `openai.gpt-6-astra` (or `global.openai.gpt-6-astra` / `us.openai.gpt-6-astra` with the `amazon-bedrock-runtime` provider), and `ultra` effort isn't available. Before asking which model to use, the skill runs `scripts/codex_models.py`, which reads Codex's model catalog for your configuration (`codex debug models`), so it always passes Codex an ID that your provider accepts. You can run it yourself:
+Model IDs and supported reasoning efforts depend on the model provider Codex is configured to use. With OpenAI the default model is `gpt-6-astra`; with Amazon Bedrock it is `openai.gpt-6-astra` (or `global.openai.gpt-6-astra` / `us.openai.gpt-6-astra` with the `amazon-bedrock-runtime` provider), and `ultra` effort isn't available. Before asking which model to use, the skill runs `scripts/codex_models.py`, which reads Codex's model catalog for your configuration (`codex debug models`), so it passes Codex an ID that your provider accepts. If the script can't get the catalog, the skill omits the model flag, and Codex uses the model set in its own config. You can run it yourself:
 
 ```bash
 python3 plugins/skill-codex/skills/codex/scripts/codex_models.py                                   # models for your current config
